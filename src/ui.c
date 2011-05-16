@@ -3108,7 +3108,7 @@ vcol2col(wp, lnum, vcol)
     start = ptr = ml_get_buf(wp->w_buffer, lnum, FALSE);
     while (count <= vcol && *ptr != NUL)
     {
-	count += win_lbr_chartabsize(wp, ptr, count, NULL);
+	count += win_lbr_chartabsize(wp, ptr, count, NULL, lnum);
 	mb_ptr_adv(ptr);
     }
     return (int)(ptr - start);
