@@ -398,7 +398,7 @@ edit(cmdchar, startln, count)
 	if (startln)
 	    Insstart.col = 0;
     }
-    Insstart_textlen = (colnr_T)linetabsize(ml_get_curline());
+    Insstart_textlen = (colnr_T)linetabsize(ml_get_curline(), Insstart.lnum);
     Insstart_blank_vcol = MAXCOL;
     if (!did_ai)
 	ai_col = 0;
@@ -1866,7 +1866,7 @@ change_indent(type, amount, round, replaced, call_changed_bytes)
 	    else
 #endif
 		++new_cursor_col;
-	    vcol += lbr_chartabsize(ptr + new_cursor_col, (colnr_T)vcol);
+	    vcol += lbr_chartabsize(ptr + new_cursor_col, (colnr_T)vcol, curwin->w_cursor.lnum);
 	}
 	vcol = last_vcol;
 
@@ -6478,7 +6478,7 @@ stop_arrow()
 	    ins_need_undo = FALSE;
 	}
 	Insstart = curwin->w_cursor;	/* new insertion starts here */
-	Insstart_textlen = (colnr_T)linetabsize(ml_get_curline());
+	Insstart_textlen = (colnr_T)linetabsize(ml_get_curline(), curwin->w_cursor.lnum);
 	ai_col = 0;
 #ifdef FEAT_VREPLACE
 	if (State & VREPLACE_FLAG)
@@ -6837,9 +6837,10 @@ oneleft()
 	for (;;)
 	{
 	    coladvance(v - width);
-	    /* getviscol() is slow, skip it when 'showbreak' is empty and
-	     * there are no multi-byte characters */
-	    if ((*p_sbr == NUL
+	    /* getviscol() is slow, skip it when 'showbreak' is empty,
+	     * 'breakindent' is not set and there are no multi-byte
+	     * characters */
+	    if ((*p_sbr == NUL && !curwin->w_p_bri
 #  ifdef FEAT_MBYTE
 			&& !has_mbyte
 #  endif
@@ -9494,11 +9495,11 @@ ins_tab()
 	getvcol(curwin, &fpos, &vcol, NULL, NULL);
 	getvcol(curwin, cursor, &want_vcol, NULL, NULL);
 
-	/* Use as many TABs as possible.  Beware of 'showbreak' and
+	/* Use as many TABs as possible.  Beware of 'breakindent', 'showbreak' and
 	 * 'linebreak' adding extra virtual columns. */
 	while (vim_iswhite(*ptr))
 	{
-	    i = lbr_chartabsize((char_u *)"\t", vcol);
+	    i = lbr_chartabsize((char_u *)"\t", vcol, cursor->lnum);
 	    if (vcol + i > want_vcol)
 		break;
 	    if (*ptr != TAB)
@@ -9524,7 +9525,7 @@ ins_tab()
 	    /* Skip over the spaces we need. */
 	    while (vcol < want_vcol && *ptr == ' ')
 	    {
-		vcol += lbr_chartabsize(ptr, vcol);
+		vcol += lbr_chartabsize(ptr, vcol, cursor->lnum);
 		++ptr;
 		++repl_off;
 	    }
@@ -9775,7 +9776,7 @@ ins_copychar(lnum)
     while ((colnr_T)temp < curwin->w_virtcol && *ptr != NUL)
     {
 	prev_ptr = ptr;
-	temp += lbr_chartabsize_adv(&ptr, (colnr_T)temp);
+	temp += lbr_chartabsize_adv(&ptr, (colnr_T)temp, lnum);
     }
     if ((colnr_T)temp > curwin->w_virtcol)
 	ptr = prev_ptr;

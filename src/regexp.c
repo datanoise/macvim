@@ -4036,7 +4036,7 @@ regmatch(scan)
 		    if (top.col == MAXCOL || bot.col == MAXCOL)
 			end = MAXCOL;
 		    cols = win_linetabsize(wp,
-				      regline, (colnr_T)(reginput - regline));
+				      regline, (colnr_T)(reginput - regline), reglnum + reg_firstlnum);
 		    if (cols < start || cols > end - (*p_sel == 'e'))
 			status = RA_NOMATCH;
 		}
@@ -4060,7 +4060,7 @@ regmatch(scan)
 	  case RE_VCOL:
 	    if (!re_num_cmp((long_u)win_linetabsize(
 			    reg_win == NULL ? curwin : reg_win,
-			    regline, (colnr_T)(reginput - regline)) + 1, scan))
+			    regline, (colnr_T)(reginput - regline), reglnum + reg_firstlnum ) + 1, scan))
 		status = RA_NOMATCH;
 	    break;
 

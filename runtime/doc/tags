@@ -90,6 +90,12 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'bl'	options.txt	/*'bl'*
 'bomb'	options.txt	/*'bomb'*
 'breakat'	options.txt	/*'breakat'*
+'breakindent'	options.txt	/*'breakindent'*
+'breakindentmin'	options.txt	/*'breakindentmin'*
+'breakindentshift'	options.txt	/*'breakindentshift'*
+'bri'	options.txt	/*'bri'*
+'brimin'	options.txt	/*'brimin'*
+'brishift'	options.txt	/*'brishift'*
 'brk'	options.txt	/*'brk'*
 'browsedir'	options.txt	/*'browsedir'*
 'bs'	options.txt	/*'bs'*

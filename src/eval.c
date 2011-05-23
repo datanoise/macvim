@@ -16998,8 +16998,11 @@ f_strdisplaywidth(argvars, rettv)
 
     if (argvars[1].v_type != VAR_UNKNOWN)
 	col = get_tv_number(&argvars[1]);
-
-    rettv->vval.v_number = (varnumber_T)(linetabsize_col(col, s) - col);
+    /*
+     * FIXME: passing 0 as 3rd argument to linetabsize_col, instead of real line number;
+     * (can we get it from here somehow?); might give incorrect result with breakindent!
+     */
+    rettv->vval.v_number = (varnumber_T)(linetabsize_col(col, s, 0) - col); 
 }
 
 /*

@@ -4426,7 +4426,7 @@ nv_screengo(oap, dir, dist)
     int		dir;
     long	dist;
 {
-    int		linelen = linetabsize(ml_get_curline());
+    int		linelen = linetabsize(ml_get_curline(), curwin->w_cursor.lnum);
     int		retval = OK;
     int		atend = FALSE;
     int		n;
@@ -4499,7 +4499,7 @@ nv_screengo(oap, dir, dist)
 		    (void)hasFolding(curwin->w_cursor.lnum,
 						&curwin->w_cursor.lnum, NULL);
 #endif
-		linelen = linetabsize(ml_get_curline());
+		linelen = linetabsize(ml_get_curline(), curwin->w_cursor.lnum);
 		if (linelen > width1)
 		    curwin->w_curswant += (((linelen - width1 - 1) / width2)
 								+ 1) * width2;
