@@ -43,7 +43,7 @@
 
 @interface FileSystemItem (Private)
 - (FileSystemItem *)_itemAtPath:(NSArray *)components;
-- (BOOL)_wildIgnored:(NSString *)name;
+- (BOOL)_ignoreFile:(NSString *)filename;
 @end
 
 
@@ -120,22 +120,7 @@ static NSMutableArray *leafNode = nil;
     reloaded = [[NSMutableArray alloc] initWithCapacity:[entries count]];
 
     for (NSString *childName in entries) {
-      BOOL isHiddenFile = [childName characterAtIndex:0] == '.';
-      if (isHiddenFile && !includesHiddenFiles) {
-        // It's a hidden file which are currently not visible.
-        continue;
-      } else if (isHiddenFile && [childName length] >= 4) {
-        // Does include hidden files, but never add Vim swap files to browser.
-        //
-        // Vim swap files have names of type
-        //   .original-file-name.sXY
-        // where XY can be anything from "aa" to "wp".
-        NSString *last3 = [childName substringFromIndex:[childName length]-3];
-        if ([last3 compare:@"saa"] >= 0 && [last3 compare:@"swp"] <= 0) {
-          // It's a swap file, ignore it.
-          continue;
-        }
-      } else if (useWildIgnore && [self _wildIgnored:childName]) {
+      if ([self _ignoreFile:childName]) {
         continue;
       }
 
@@ -174,10 +159,28 @@ static NSMutableArray *leafNode = nil;
   return NO;
 }
 
-- (BOOL)_wildIgnored:(NSString *)fileName {
-  NSString *eval = [NSString stringWithFormat:@"empty(expand(fnameescape('%@')))", fileName];
-  NSString *result = [vim evaluateVimExpression: eval];
-  return [result isEqualToString:@"1"];
+- (BOOL)_ignoreFile:(NSString *)filename {
+  BOOL isHiddenFile = [filename characterAtIndex:0] == '.';
+  if (isHiddenFile && !includesHiddenFiles) {
+    // It's a hidden file which are currently not visible.
+    return YES;
+  } else if (isHiddenFile && [filename length] >= 4) {
+    // Does include hidden files, but never add Vim swap files to browser.
+    //
+    // Vim swap files have names of type
+    //   .original-file-name.sXY
+    // where XY can be anything from "aa" to "wp".
+    NSString *last3 = [filename substringFromIndex:[filename length]-3];
+    if ([last3 compare:@"saa"] >= 0 && [last3 compare:@"swp"] <= 0) {
+      // It's a swap file, ignore it.
+      return YES;
+    }
+  } else if (useWildIgnore) {
+    NSString *eval = [NSString stringWithFormat:@"empty(expand(fnameescape('%@')))", filename];
+    NSString *result = [vim evaluateVimExpression:eval];
+    return [result isEqualToString:@"1"];
+  }
+  return NO;
 }
 
 - (BOOL)isLeaf {
@@ -382,18 +385,17 @@ static NSMutableArray *leafNode = nil;
   [filesView setAllowsMultipleSelection:YES];
   NSTableColumn *column = [[[NSTableColumn alloc] initWithIdentifier:nil] autorelease];
   ImageAndTextCell *cell = [[[ImageAndTextCell alloc] init] autorelease];
-  [cell setFont:[NSFont fontWithName:[[cell font] fontName] size:11]];
   [cell setEditable:YES];
   [column setDataCell:cell];
   [filesView addTableColumn:column];
   [filesView setOutlineTableColumn:column];
 
   pathControl = [[[NSPathControl alloc] initWithFrame:NSMakeRect(0, 0, 0, 20)] autorelease];
+  [pathControl setRefusesFirstResponder:YES];
   [pathControl setAutoresizingMask:NSViewWidthSizable];
-  [pathControl setPathStyle:NSPathStyleStandard];
-  [pathControl setFont:[NSFont fontWithName:[[pathControl font] fontName] size:11]];
-  [pathControl setBackgroundColor:[NSColor clearColor]];
-  [pathControl setRefusesFirstResponder: YES];
+  [pathControl setBackgroundColor:[NSColor whiteColor]];
+  [pathControl setPathStyle:NSPathStylePopUp];
+  [pathControl setFont:[NSFont fontWithName:[[pathControl font] fontName] size:12]];
   [pathControl setTarget:self];
   [pathControl setAction:@selector(changeWorkingDirectoryFromPathControl:)];
 
@@ -547,6 +549,7 @@ static NSMutableArray *leafNode = nil;
         [paths addObject:appPath];
       }
     }
+    [identifiers release];
     return [paths count] == 0 ? nil : paths;
   }
   return nil;
@@ -597,42 +600,44 @@ static NSMutableArray *leafNode = nil;
   // File operations
   //[menu addItemWithTitle:@"New File" action:@selector(newFile:) keyEquivalent:@""];
   [menu addItemWithTitle:@"New Folder" action:@selector(newFolder:) keyEquivalent:@""];
-  [menu addItemWithTitle:@"Rename…" action:@selector(renameFile:) keyEquivalent:@""];
-  [menu addItemWithTitle:@"Delete selected Files" action:@selector(deleteSelectedFiles:) keyEquivalent:@""];
+  if(fsItem) {
+    [menu addItemWithTitle:@"Rename…" action:@selector(renameFile:) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Delete selected Files" action:@selector(deleteSelectedFiles:) keyEquivalent:@""];
 
-  // Vim open/cwd
-  [menu addItem:[NSMenuItem separatorItem]];
-  [menu addItemWithTitle:@"Open selected Files in Tabs" action:@selector(openFilesInTabs:) keyEquivalent:@""];
-  [menu addItemWithTitle:@"Open selected Files in Horizontal Split Views" action:@selector(openFilesInHorizontalSplitViews:) keyEquivalent:@""];
-  [menu addItemWithTitle:@"Open selected Files in Vertical Split Views" action:@selector(openFilesInVerticalSplitViews:) keyEquivalent:@""];
-  title = [NSString stringWithFormat:@"Change working directory to “%@”", [[fsItem dirItem] relativePath]];
-  [menu addItemWithTitle:title action:@selector(changeWorkingDirectoryToSelection:) keyEquivalent:@""];
+    // Vim open/cwd
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:@"Open selected Files in Tabs" action:@selector(openFilesInTabs:) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Open selected Files in Horizontal Split Views" action:@selector(openFilesInHorizontalSplitViews:) keyEquivalent:@""];
+    [menu addItemWithTitle:@"Open selected Files in Vertical Split Views" action:@selector(openFilesInVerticalSplitViews:) keyEquivalent:@""];
+    title = [NSString stringWithFormat:@"Change working directory to “%@”", [[fsItem dirItem] relativePath]];
+    [menu addItemWithTitle:title action:@selector(changeWorkingDirectoryToSelection:) keyEquivalent:@""];
 
-  // Open elsewhere
-  NSString *filename = [fsItem relativePath];
-  [menu addItem:[NSMenuItem separatorItem]];
-  title = [NSString stringWithFormat:@"Reveal “%@” in Finder", filename];
-  [menu addItemWithTitle:title action:@selector(revealInFinder:) keyEquivalent:@""];
-  title = [NSString stringWithFormat:@"Open “%@” with Finder", filename];
-  [menu addItemWithTitle:title action:@selector(openWithFinder:) keyEquivalent:@""];
-  // open with app submenu
-  title = [NSString stringWithFormat:@"Open “%@” with…", filename];
-  NSMenuItem *openWithFinderItem = [menu addItemWithTitle:title action:NULL keyEquivalent:@""];
-  NSArray *appPaths = [self appsAssociatedWithItem:fsItem];
-  if (appPaths) {
-    NSMenu *submenu = [[NSMenu new] autorelease];
-    NSInteger i;
-    for (i = 0; i < [appPaths count]; i++) {
-      NSString *appPath = [appPaths objectAtIndex:i];
-      NSString *appName = [[NSFileManager defaultManager] displayNameAtPath:appPath];
-      NSImage *appIcon = [[NSWorkspace sharedWorkspace] iconForFile:appPath];
-      [appIcon setSize:NSMakeSize(16, 16)];
-      item = [submenu addItemWithTitle:appName action:@selector(openFileWithApp:) keyEquivalent:@""];
-      [item setTarget:self];
-      [item setTag:i];
-      [item setImage:appIcon];
+    // Open elsewhere
+    NSString *filename = [fsItem relativePath];
+    [menu addItem:[NSMenuItem separatorItem]];
+    title = [NSString stringWithFormat:@"Reveal “%@” in Finder", filename];
+    [menu addItemWithTitle:title action:@selector(revealInFinder:) keyEquivalent:@""];
+    title = [NSString stringWithFormat:@"Open “%@” with Finder", filename];
+    [menu addItemWithTitle:title action:@selector(openWithFinder:) keyEquivalent:@""];
+    // open with app submenu
+    title = [NSString stringWithFormat:@"Open “%@” with…", filename];
+    NSMenuItem *openWithFinderItem = [menu addItemWithTitle:title action:NULL keyEquivalent:@""];
+    NSArray *appPaths = [self appsAssociatedWithItem:fsItem];
+    if (appPaths) {
+      NSMenu *submenu = [[NSMenu new] autorelease];
+      NSInteger i;
+      for (i = 0; i < [appPaths count]; i++) {
+        NSString *appPath = [appPaths objectAtIndex:i];
+        NSString *appName = [[NSFileManager defaultManager] displayNameAtPath:appPath];
+        NSImage *appIcon = [[NSWorkspace sharedWorkspace] iconForFile:appPath];
+        [appIcon setSize:NSMakeSize(16, 16)];
+        item = [submenu addItemWithTitle:appName action:@selector(openFileWithApp:) keyEquivalent:@""];
+        [item setTarget:self];
+        [item setTag:i];
+        [item setImage:appIcon];
+      }
+      [openWithFinderItem setSubmenu:submenu];
     }
-    [openWithFinderItem setSubmenu:submenu];
   }
 
   // Misc
@@ -696,11 +701,15 @@ static NSMutableArray *leafNode = nil;
 }
 
 - (void)outlineView:(NSOutlineView *)outlineView setObjectValue:(NSString *)name forTableColumn:(NSTableColumn *)tableColumn byItem:(FileSystemItem *)item {
+  // save these here, cause by moving the file and reloading the view 'item' will be released
+  BOOL isLeaf = [item isLeaf];
+  NSString *fullPath = [item fullPath];
+
   FileSystemItem *dirItem = item.parent;
   NSString *newPath = [[dirItem fullPath] stringByAppendingPathComponent:name];
   NSError *error = nil;
   dirItem.ignoreNextReload = YES;
-  BOOL moved = [[NSFileManager defaultManager] moveItemAtPath:[item fullPath]
+  BOOL moved = [[NSFileManager defaultManager] moveItemAtPath:fullPath
                                                        toPath:newPath
                                                         error:&error];
   if (moved) {
@@ -713,7 +722,19 @@ static NSMutableArray *leafNode = nil;
     NSInteger row = [[self outlineView] rowForItem:[dirItem itemWithName:name]];
     NSIndexSet *index = [NSIndexSet indexSetWithIndex:row];
     [[self outlineView] selectRowIndexes:index byExtendingSelection:NO];
-    // TODO: should reopen all open buffers with files inside of this directory
+    if(isLeaf) {
+      MMVimController *vim = [windowController vimController];
+      NSString *bufName = [vim evaluateVimExpression:[NSString stringWithFormat:@"bufname('%@')", fullPath]];
+      if([bufName length] != 0) {
+        newPath = [newPath stringByEscapingSpecialFilenameCharacters];
+        NSString *input = [NSString stringWithFormat:@"<C-\\><C-N>"
+                                                   ":bdelete! %@|edit %@<CR>", bufName, newPath];
+        [vim addVimInput:input];
+      }
+    }
+    else {
+      // TODO: should reopen all open buffers with files inside of this directory
+    }
   } else {
     dirItem.ignoreNextReload = NO;
     NSLog(@"[!] Unable to rename `%@' to `%@'. Error: %@", [item fullPath], newPath, [error localizedDescription]);
@@ -796,14 +817,27 @@ static NSMutableArray *leafNode = nil;
 // TODO needs multiple selection support
 - (void)deleteSelectedFiles:(NSMenuItem *)sender {
   FileSystemItem *item = [self itemAtRow:[sender tag]];
+  NSString *fullPath = [item fullPath];
+  BOOL isLeaf = [item isLeaf];
   FileSystemItem *dirItem = item.parent;
+
   dirItem.ignoreNextReload = YES;
-  [[NSFileManager defaultManager] removeItemAtPath:[item fullPath] error:NULL];
+  [[NSFileManager defaultManager] removeItemAtPath:fullPath error:NULL];
   [dirItem reloadRecursive:NO];
   if(rootItem == dirItem)
     [[self outlineView] reloadData];
   else
     [[self outlineView] reloadItem:dirItem reloadChildren:YES];
+
+  if(isLeaf) {
+    MMVimController *vim = [windowController vimController];
+    NSString *bufName = [vim evaluateVimExpression:[NSString stringWithFormat:@"bufname('%@')", fullPath]];
+    if([bufName length] != 0) {
+      NSString *input = [NSString stringWithFormat:@"<C-\\><C-N>"
+                                                 ":bdelete! %@<CR>", bufName];
+      [vim addVimInput:input];
+    }
+  }
 }
 
 - (void)toggleShowHiddenFiles:(NSMenuItem *)sender {
