@@ -514,11 +514,15 @@ static NSMutableArray *leafNode = nil;
 }
 
 - (void)changeWorkingDirectory:(NSString *)path {
-  // Tell Vim to change the pwd.  As a side effect this will cause a new root
-  // to be set to the folder the user just double-clicked on.
-  NSString *input = [NSString stringWithFormat:
-                @"<C-\\><C-N>:exe \"cd \" . fnameescape(\"%@\")<CR>", path];
-  [[windowController vimController] addVimInput:input];
+  BOOL isDir;
+  if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) {
+    if(!isDir) path = [path stringByDeletingLastPathComponent];
+    // Tell Vim to change the pwd.  As a side effect this will cause a new root
+    // to be set to the folder the user just double-clicked on.
+    NSString *input = [NSString stringWithFormat:
+                                   @"<C-\\><C-N>:exe \"cd \" . fnameescape(\"%@\")<CR>", path];
+    [[windowController vimController] addVimInput:input];
+  }
 }
 
 // Ignores the user's preference by always opening in the current window for the
@@ -600,6 +604,7 @@ static NSMutableArray *leafNode = nil;
   NSMenuItem *item;
   NSString *title;
   FileSystemItem *fsItem = [self itemAtRow:row];
+  BOOL isLeaf = [fsItem isLeaf];
 
   // File operations
   //[menu addItemWithTitle:@"New File" action:@selector(newFile:) keyEquivalent:@""];
@@ -610,9 +615,11 @@ static NSMutableArray *leafNode = nil;
 
     // Vim open/cwd
     [menu addItem:[NSMenuItem separatorItem]];
-    [menu addItemWithTitle:@"Open selected Files in Tabs" action:@selector(openFilesInTabs:) keyEquivalent:@""];
-    [menu addItemWithTitle:@"Open selected Files in Horizontal Split Views" action:@selector(openFilesInHorizontalSplitViews:) keyEquivalent:@""];
-    [menu addItemWithTitle:@"Open selected Files in Vertical Split Views" action:@selector(openFilesInVerticalSplitViews:) keyEquivalent:@""];
+    if(isLeaf) {
+      [menu addItemWithTitle:@"Open selected Files in Tabs" action:@selector(openFilesInTabs:) keyEquivalent:@""];
+      [menu addItemWithTitle:@"Open selected Files in Horizontal Split Views" action:@selector(openFilesInHorizontalSplitViews:) keyEquivalent:@""];
+      [menu addItemWithTitle:@"Open selected Files in Vertical Split Views" action:@selector(openFilesInVerticalSplitViews:) keyEquivalent:@""];
+    }
     title = [NSString stringWithFormat:@"Change working directory to “%@”", [[fsItem dirItem] relativePath]];
     [menu addItemWithTitle:title action:@selector(changeWorkingDirectoryToSelection:) keyEquivalent:@""];
 
