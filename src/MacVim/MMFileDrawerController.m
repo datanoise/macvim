@@ -72,7 +72,7 @@ static NSMutableArray *leafNode = nil;
       includesHiddenFiles = NO;
       NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
       useWildIgnore = [ud boolForKey:MMDrawerWildIgnoreKey];
-      NSLog(@"WildIgnore %d", useWildIgnore);
+      /* NSLog(@"WildIgnore %d", useWildIgnore); */
     }
     ignoreNextReload = NO;
   }
