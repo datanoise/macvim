@@ -678,21 +678,31 @@ static NSMutableArray *leafNode = nil;
 }
 
 - (void)outlineViewSelectionDidChange:(NSNotification *)notification {
-  if (userHasChangedSelection && [[self outlineView] numberOfSelectedRows] == 1) {
-    NSEvent *event = [NSApp currentEvent];
-    int layout = [[NSUserDefaults standardUserDefaults] integerForKey:MMOpenLayoutKey];
-    if ([event modifierFlags] & NSAlternateKeyMask) {
-      if (layout == MMLayoutTabs) {
-        // The user normally creates a new tab when opening a file,
-        // so open this file in the current one
-        layout = MMLayoutArglist;
-      } else {
-        // The user normally opens a file in the current tab,
-        // so open this file in a new one
-        layout = MMLayoutTabs;
+  FilesOutlineView *outlineView = [self outlineView];
+  if (userHasChangedSelection && [outlineView numberOfSelectedRows] == 1) {
+    FileSystemItem *item = [self itemAtRow:[outlineView selectedRow]];
+    if([item isLeaf]) {
+      NSEvent *event = [NSApp currentEvent];
+      int layout = [[NSUserDefaults standardUserDefaults] integerForKey:MMOpenLayoutKey];
+      if ([event modifierFlags] & NSAlternateKeyMask) {
+        if (layout == MMLayoutTabs) {
+          // The user normally creates a new tab when opening a file,
+          // so open this file in the current one
+          layout = MMLayoutArglist;
+        } else {
+          // The user normally opens a file in the current tab,
+          // so open this file in a new one
+          layout = MMLayoutTabs;
+        }
       }
+      [self openSelectedFilesInCurrentWindowWithLayout:layout];
     }
-    [self openSelectedFilesInCurrentWindowWithLayout:layout];
+    else {
+      if ([outlineView isItemExpanded:item])
+        [outlineView collapseItem:item];
+      else
+        [outlineView expandItem:item];
+    }
   }
   userHasChangedSelection = NO;
 }
@@ -705,15 +715,7 @@ static NSMutableArray *leafNode = nil;
         shouldEditTableColumn:(NSTableColumn *)tableColumn
                          item:(id)item
 {
-  // Called when an item was double-clicked.  Change the root to item clicked
-  // on and expand.
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  NSString *path = [item fullPath];
-  BOOL isDir;
-  BOOL valid = [fileManager fileExistsAtPath:path isDirectory:&isDir];
-  if (valid && isDir) {
-    [self changeWorkingDirectory:path];
-  }
+  // Called when an item was double-clicked.
 
   return NO;
 }
