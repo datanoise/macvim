@@ -33,7 +33,6 @@
 - (NSString *)fullPath;
 - (NSString *)relativePath;
 - (BOOL)isLeaf;
-- (void)clear;
 - (BOOL)reloadRecursive:(BOOL)recursive;
 - (FileSystemItem *)itemAtPath:(NSString *)itemPath;
 - (FileSystemItem *)itemWithName:(NSString *)name;
@@ -98,11 +97,6 @@ static NSMutableArray *leafNode = nil;
   return children;
 }
 
-- (void)clear {
-  [children release];
-  children = nil;
-}
-
 // Returns YES if the children have been reloaded, otherwise it returns NO.
 //
 // This is really only so the controller knows whether or not to reload the view.
@@ -152,7 +146,8 @@ static NSMutableArray *leafNode = nil;
       }
     }
 
-    [children release];
+    if(children != leafNode)
+      [children release];
     children = reloaded;
     return YES;
   } else {
