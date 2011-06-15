@@ -100,6 +100,7 @@ if exists("macvim_hig_shift_movement")
   ino  <S-D-Down>     <S-C-End>
 endif " exists("macvim_hig_shift_movement")
 
+au BufEnter,WinEnter * :macaction selectInDrawer:
 
 " Restore the previous value of 'cpoptions'.
 let &cpo = s:cpo_save
