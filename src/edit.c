@@ -1391,10 +1391,45 @@ docomplete:
 		goto do_intr;
 #endif
 
+normalchar:
 	    /*
 	     * Insert a nomal character.
 	     */
-normalchar:
+#ifdef FEAT_AUTOCMD
+	    if (!p_paste)
+	    {
+		/* Trigger the InsertCharPre event.  Lock the text to avoid
+		 * weird things from happening. */
+		set_vim_var_char(c);
+		++textlock;
+		if (apply_autocmds(EVENT_INSERTCHARPRE, NULL, NULL,
+							       FALSE, curbuf))
+		{
+		    /* Get the new value of v:char.  If it is more than one
+		     * character insert it literally. */
+		    char_u *s = get_vim_var_str(VV_CHAR);
+		    if (MB_CHARLEN(s) > 1)
+		    {
+			if (stop_arrow() != FAIL)
+			{
+			    ins_str(s);
+			    AppendToRedobuffLit(s, -1);
+			}
+			c = NUL;
+		    }
+		    else
+			c = PTR2CHAR(s);
+		}
+
+		set_vim_var_string(VV_CHAR, NULL, -1);
+		--textlock;
+
+		/* If the new value is an empty string then don't insert a
+		 * char. */
+		if (c == NUL)
+		    break;
+	    }
+#endif
 #ifdef FEAT_SMARTINDENT
 	    /* Try to perform smart-indenting. */
 	    ins_try_si(c);
@@ -1563,12 +1598,16 @@ ins_redraw(ready)
 ins_ctrl_v()
 {
     int		c;
+    int		did_putchar = FALSE;
 
     /* may need to redraw when no more chars available now */
     ins_redraw(FALSE);
 
     if (redrawing() && !char_avail())
+    {
 	edit_putchar('^', TRUE);
+	did_putchar = TRUE;
+    }
     AppendToRedobuff((char_u *)CTRL_V_STR);	/* CTRL-V */
 
 #ifdef FEAT_CMDL_INFO
@@ -1576,8 +1615,10 @@ ins_ctrl_v()
 #endif
 
     c = get_literal();
-    edit_unputchar();  /* when line fits in 'columns' the '^' is at the start
-			  of the next line and will not be redrawn */
+    if (did_putchar)
+	/* when the line fits in 'columns' the '^' is at the start of the next
+	 * line and will not removed by the redraw */
+	edit_unputchar();
 #ifdef FEAT_CMDL_INFO
     clear_showcmd();
 #endif
@@ -3495,11 +3536,7 @@ ins_compl_addfrommatch()
 	    return;
     }
     p += len;
-#ifdef FEAT_MBYTE
-    c = mb_ptr2char(p);
-#else
-    c = *p;
-#endif
+    c = PTR2CHAR(p);
     ins_compl_addleader(c);
 }
 
@@ -9672,6 +9709,7 @@ ins_digraph()
 {
     int	    c;
     int	    cc;
+    int	    did_putchar = FALSE;
 
     pc_status = PC_STATUS_UNSET;
     if (redrawing() && !char_avail())
@@ -9680,6 +9718,7 @@ ins_digraph()
 	ins_redraw(FALSE);
 
 	edit_putchar('?', TRUE);
+	did_putchar = TRUE;
 #ifdef FEAT_CMDL_INFO
 	add_to_showcmd_c(Ctrl_K);
 #endif
@@ -9696,8 +9735,10 @@ ins_digraph()
     c = plain_vgetc();
     --no_mapping;
     --allow_keys;
-    edit_unputchar();  /* when line fits in 'columns' the '?' is at the start
-			  of the next line and will not be redrawn */
+    if (did_putchar)
+	/* when the line fits in 'columns' the '?' is at the start of the next
+	 * line and will not be removed by the redraw */
+	edit_unputchar();
 
     if (IS_SPECIAL(c) || mod_mask)	    /* special key */
     {
@@ -9709,6 +9750,7 @@ ins_digraph()
     }
     if (c != ESC)
     {
+	did_putchar = FALSE;
 	if (redrawing() && !char_avail())
 	{
 	    /* may need to redraw when no more chars available now */
@@ -9716,11 +9758,9 @@ ins_digraph()
 
 	    if (char2cells(c) == 1)
 	    {
-		/* first remove the '?', otherwise it's restored when typing
-		 * an ESC next */
-		edit_unputchar();
 		ins_redraw(FALSE);
 		edit_putchar(c, TRUE);
+		did_putchar = TRUE;
 	    }
 #ifdef FEAT_CMDL_INFO
 	    add_to_showcmd_c(c);
@@ -9731,8 +9771,10 @@ ins_digraph()
 	cc = plain_vgetc();
 	--no_mapping;
 	--allow_keys;
-	edit_unputchar();  /* when line fits in 'columns' the '?' is at the
-			      start of the next line and will not be redrawn */
+	if (did_putchar)
+	    /* when the line fits in 'columns' the '?' is at the start of the
+	     * next line and will not be removed by a redraw */
+	    edit_unputchar();
 	if (cc != ESC)
 	{
 	    AppendToRedobuff((char_u *)CTRL_V_STR);
