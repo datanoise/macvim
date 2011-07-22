@@ -1217,7 +1217,7 @@ if has("gui_macvim")
   macm Window.Minimize\ All	key=<D-M-m>	action=miniaturizeAll:	alt=YES
   macm Window.Zoom		key=<D-C-z>	action=performZoom:
   macm Window.Zoom\ All		key=<D-M-C-z>	action=zoomAll:		alt=YES
-  macm Window.Toggle\ Full\ Screen\ Mode	key=<D-F>
+  macm Window.Toggle\ Full\ Screen\ Mode	key=<D-C-f>
   macm Window.Toggle\ File\ Browser key=<D-E>   action=toggleDrawer:
   macm Window.Select\ File\ in\ Browser key=<D-M-e>   action=selectInDrawer:
   macm Window.Select\ Next\ Tab			key=<D-}>

@@ -183,6 +183,9 @@
         [win _setContentHasShadow:NO];
 
     fileDrawerController = [[MMFileDrawerController alloc] initWithWindowController:self];
+#if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_7)
+    [win setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+#endif
 
     return self;
 }
@@ -980,6 +983,14 @@
 {
     [fileDrawerController selectInDrawer];
 }
+
+#if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7)
+- (NSApplicationPresentationOptions)window:(NSWindow *)window
+    willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)opt
+{
+    return opt | NSApplicationPresentationAutoHideToolbar;
+}
+#endif
 
 
 // -- Services menu delegate -------------------------------------------------
