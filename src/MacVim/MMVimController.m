@@ -34,6 +34,7 @@
 #import "MMWindowController.h"
 #import "Miscellaneous.h"
 #import "MMCoreTextView.h"
+#import "MMWindow.h"
 
 
 static NSString *MMDefaultToolbarImageName = @"Attention";
@@ -766,22 +767,14 @@ static BOOL isUnsafeMessage(int msgid);
         [self setServerName:name];
         [name release];
     } else if (EnterFullscreenMsgID == msgid) {
-#if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_7)
-        [[windowController window] toggleFullScreen:self];
-#else
         const void *bytes = [data bytes];
         int fuoptions = *((int*)bytes); bytes += sizeof(int);
         int bg = *((int*)bytes);
         NSColor *back = [NSColor colorWithArgbInt:bg];
 
         [windowController enterFullscreen:fuoptions backgroundColor:back];
-#endif
     } else if (LeaveFullscreenMsgID == msgid) {
-#if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_7)
-        [[windowController window] toggleFullScreen:self];
-#else
         [windowController leaveFullscreen];
-#endif
     } else if (SetBuffersModifiedMsgID == msgid) {
         const void *bytes = [data bytes];
         // state < 0  <->  some buffer modified

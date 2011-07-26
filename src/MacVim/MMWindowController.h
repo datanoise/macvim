@@ -35,6 +35,9 @@
     BOOL                fullscreenEnabled;
     NSString            *windowAutosaveKey;
     MMFullscreenWindow  *fullscreenWindow;
+    int                 fullscreenOptions;
+    BOOL                delayEnterFullscreen;
+    NSRect              preFullscreenFrame;
     MMWindow            *decoratedWindow;
     NSString            *lastSetTitle;
     int                 userRows;
@@ -42,6 +45,7 @@
     NSPoint             userTopLeft;
     NSPoint             defaultTopLeft;
     MMFileDrawerController *fileDrawerController;
+    NSToolbar           *toolbar;
 }
 
 - (id)initWithVimController:(MMVimController *)controller;
@@ -80,6 +84,7 @@
 - (void)enterFullscreen:(int)fuoptions backgroundColor:(NSColor *)back;
 - (void)leaveFullscreen;
 - (void)setFullscreenBackgroundColor:(NSColor *)back;
+- (void)invFullscreen:(id)sender;
 
 - (void)setBufferModified:(BOOL)mod;
 - (void)setTopLeft:(NSPoint)pt;
