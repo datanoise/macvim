@@ -90,6 +90,7 @@
 - (void)doFindNext:(BOOL)next;
 - (void)updateToolbar;
 - (void)maximizeWindow:(int)options;
+- (void)applicationDidChangeScreenParameters:(NSNotification *)notification;
 @end
 
 
@@ -195,6 +196,12 @@
     [win setAnimationBehavior:NSWindowAnimationBehaviorDocumentWindow];
 #endif
 
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self
+           selector:@selector(applicationDidChangeScreenParameters:)
+               name:NSApplicationDidChangeScreenParametersNotification
+             object:NSApp];
+
     return self;
 }
 
@@ -246,6 +253,8 @@
 
     // NOTE: Must set this before possibly leaving full screen.
     setupDone = NO;
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (fullscreenEnabled) {
         // If we are closed while still in fullscreen, end fullscreen mode,
@@ -307,7 +316,7 @@
     // enter full screen after calling makeKeyAndOrderFront:.
     // TODO: Figure out a way to switch back to main space?
     NSWindow *win = [self window];
-    BOOL inFullScreen = ([NSApp presentationOptions] &
+    BOOL inFullScreen = ([NSApp currentSystemPresentationOptions] &
                          NSApplicationPresentationFullScreen) != 0;
     if (inFullScreen)
         [win setCollectionBehavior:NSWindowCollectionBehaviorDefault];
@@ -1460,6 +1469,9 @@
     NSSize size = [[NSScreen mainScreen] frame].size;
     [vimView constrainRows:&maxRows columns:&maxColumns toSize:size];
 
+    ASLogDebug(@"max: %dx%d  curr: %dx%d",
+            maxRows, maxColumns, currRows, currColumns);
+
     // Compute current fu size
     int fuRows = currRows, fuColumns = currColumns;
     if (options & FUOPT_MAXVERT)
@@ -1492,6 +1504,18 @@
         [vc sendMessage:msgid data:data];
         [[vimView textView] setMaxRows:fuRows columns:fuColumns];
     }
+}
+
+- (void)applicationDidChangeScreenParameters:(NSNotification *)notification
+{
+#if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_7)
+    if (fullscreenEnabled) {
+        ASLogInfo(@"Re-maximizing full screen window...");
+        [self maximizeWindow:fullscreenOptions];
+    }
+#endif
+    if (fullscreenWindow)
+        [fullscreenWindow applicationDidChangeScreenParameters:notification];
 }
 
 @end // MMWindowController (Private)
