@@ -48,6 +48,7 @@ NSString *MMSuppressTerminationAlertKey = @"MMSuppressTerminationAlert";
 NSString *MMDrawerPreferredEdgeKey      = @"MMDrawerPreferredEdge";
 NSString *MMDrawerFontSizeKey           = @"MMFileDrawerFontSize";
 NSString *MMDrawerWildIgnoreKey         = @"MMFileDrawerWildIgnore";
+NSString *MMNativeFullScreenKey         = @"MMNativeFullScreen";
 
 
 
