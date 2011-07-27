@@ -5299,6 +5299,7 @@ definition-search	tagsrch.txt	/*definition-search*
 definitions	intro.txt	/*definitions*
 delete()	eval.txt	/*delete()*
 delete-insert	change.txt	/*delete-insert*
+delete-key	gui_mac.txt	/*delete-key*
 delete-menus	gui.txt	/*delete-menus*
 deleting	change.txt	/*deleting*
 design-assumptions	develop.txt	/*design-assumptions*
@@ -5845,6 +5846,8 @@ g:decada.Error_Format	ft_ada.txt	/*g:decada.Error_Format*
 g:decada.Make()	ft_ada.txt	/*g:decada.Make()*
 g:decada.Make_Command	ft_ada.txt	/*g:decada.Make_Command*
 g:decada.Unit_Name()	ft_ada.txt	/*g:decada.Unit_Name()*
+g:filetype_csh	syntax.txt	/*g:filetype_csh*
+g:filetype_r	syntax.txt	/*g:filetype_r*
 g:gnat	ft_ada.txt	/*g:gnat*
 g:gnat.Error_Format	ft_ada.txt	/*g:gnat.Error_Format*
 g:gnat.Find()	ft_ada.txt	/*g:gnat.Find()*
@@ -6613,6 +6616,7 @@ mac-vimfile	os_mac.txt	/*mac-vimfile*
 macintosh	os_mac.txt	/*macintosh*
 macro	map.txt	/*macro*
 macvim	gui_mac.txt	/*macvim*
+macvim-<Backspace>	gui_mac.txt	/*macvim-<Backspace>*
 macvim-backspace	gui_mac.txt	/*macvim-backspace*
 macvim-clientserver	remote.txt	/*macvim-clientserver*
 macvim-colors	gui_mac.txt	/*macvim-colors*
