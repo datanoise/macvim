@@ -30,6 +30,7 @@
     BOOL                windowPresented;
     BOOL                shouldResizeVimView;
     BOOL                shouldRestoreUserTopLeft;
+    BOOL                shouldMaximizeWindow;
     int                 updateToolbarFlag;
     BOOL                keepOnScreen;
     NSString            *windowAutosaveKey;
