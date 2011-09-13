@@ -1066,6 +1066,21 @@ recurseDraw(const unichar *chars, CGGlyph *glyphs, CGSize *advances,
     float y = frame.size.height - insetSize.height - (1+row)*cellSize.height;
     float w = cellSize.width;
 
+    /* shadow calculations */
+    float darken_factor = 20 / 100.0;
+    int ishadow = 0;
+    CGFloat r, g, b, a;
+    CGFloat h, s, v, a2;
+
+    NSColor *c = [NSColor colorWithCalibratedRed:RED(bg) green:GREEN(bg) blue:BLUE(bg) alpha:ALPHA(bg)];
+    [c getHue:&h saturation:&s brightness:&v alpha:&a2];
+    v = (v - darken_factor) > 0 ? (v - darken_factor) : 0;
+    NSColor *shadow = [NSColor colorWithCalibratedHue:h saturation:s brightness:v alpha:a2];
+    // use shadowColor?
+    [shadow getRed:&r green:&g blue:&b alpha:&a];
+
+    ishadow = ((int)(b*255)) | ((int)(g*255))<<8 | ((int)(r*255))<<16 | 0xff000000;
+
     if (flags & DRAW_WIDE) {
         // NOTE: It is assumed that either all characters in 'chars' are wide
         // or all are normal width.
@@ -1132,7 +1147,6 @@ recurseDraw(const unichar *chars, CGGlyph *glyphs, CGSize *advances,
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextSetTextDrawingMode(context, kCGTextFill);
-    CGContextSetRGBFillColor(context, RED(fg), GREEN(fg), BLUE(fg), ALPHA(fg));
     CGContextSetFontSize(context, [font pointSize]);
 
     NSUInteger i;
@@ -1155,6 +1169,14 @@ recurseDraw(const unichar *chars, CGGlyph *glyphs, CGSize *advances,
             fontRef = fr;
         }
     }
+
+
+    /* Draw with negative x/y offsets for a drop shadow */
+    CGContextSetRGBFillColor(context, RED(ishadow), GREEN(ishadow), BLUE(ishadow), ALPHA(ishadow));
+    recurseDraw(chars, glyphs, advances, length, context, fontRef, x-1,
+                y+fontDescent-1);
+
+    CGContextSetRGBFillColor(context, RED(fg), GREEN(fg), BLUE(fg), ALPHA(fg));
 
     recurseDraw(chars, glyphs, advances, length, context, fontRef, x,
                 y+fontDescent);
