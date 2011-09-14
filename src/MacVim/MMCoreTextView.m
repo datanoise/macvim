@@ -1074,7 +1074,15 @@ recurseDraw(const unichar *chars, CGGlyph *glyphs, CGSize *advances,
 
     NSColor *c = [NSColor colorWithCalibratedRed:RED(bg) green:GREEN(bg) blue:BLUE(bg) alpha:ALPHA(bg)];
     [c getHue:&h saturation:&s brightness:&v alpha:&a2];
-    v = (v - darken_factor) > 0 ? (v - darken_factor) : 0;
+    if ( v > 0.95) {
+        /* don't shadow on VERY bright colors or white */
+    } else if ( v > 0.85 ) {
+        v = v - 0.10;
+    } else if (v > 0.75) {
+        v = v - 0.15;
+    } else {
+        v = (v - darken_factor) > 0 ? (v - darken_factor) : 0;
+    }
     NSColor *shadow = [NSColor colorWithCalibratedHue:h saturation:s brightness:v alpha:a2];
     // use shadowColor?
     [shadow getRed:&r green:&g blue:&b alpha:&a];
