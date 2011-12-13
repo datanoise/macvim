@@ -1687,7 +1687,7 @@ op_delete(oap)
      * If a yank register was specified, put the deleted text into that
      * register.  For the black hole register '_' don't yank anything.
      */
-    if (oap->regname != '_' && !VIsual_select)
+    if (oap->regname != '_')
     {
 	if (oap->regname != 0)
 	{

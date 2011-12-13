@@ -695,6 +695,7 @@ normal_cmd(oap, toplevel)
 	 * Insert the typed character in the typeahead buffer, so that it can
 	 * be mapped in Insert mode.  Required for ":lmap" to work. */
 	ins_char_typebuf(c);
+        oap->regname = '_';
 	if (restart_edit != 0)
 	    c = 'd';
 	else
