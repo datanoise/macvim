@@ -1,5 +1,7 @@
 .*.swp
 .DS_Store
+tags
+cscope.out
 src/MacVim/MacVim.xcodeproj/*.mode1
 src/MacVim/MacVim.xcodeproj/*.mode1v3
 src/MacVim/MacVim.xcodeproj/*.pbxuser
