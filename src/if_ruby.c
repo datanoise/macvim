@@ -1255,6 +1255,11 @@ static VALUE f_p(int argc, VALUE *argv, VALUE self UNUSED)
     return Qnil;
 }
 
+static VALUE f_nop(VALUE self)
+{
+    return Qnil;
+}
+
 static void ruby_io_init(void)
 {
 #ifndef DYNAMIC_RUBY
@@ -1263,6 +1268,7 @@ static void ruby_io_init(void)
 
     rb_stdout = rb_obj_alloc(rb_cObject);
     rb_define_singleton_method(rb_stdout, "write", vim_message, 1);
+    rb_define_singleton_method(rb_stdout, "flush", f_nop, 0);
     rb_define_global_function("p", f_p, -1);
 }
 
